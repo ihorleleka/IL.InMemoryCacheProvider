@@ -4,24 +4,27 @@ namespace IL.InMemoryCacheProvider.CacheProvider;
 
 public class InMemoryCacheProvider : ICacheProvider
 {
-    private readonly MemoryCache _cache;
+    private readonly MemoryCache _cache = MemoryCache.Default;
 
-    public InMemoryCacheProvider()
+    public void Add<T>(string key, T? obj, DateTimeOffset? expiration = null, bool useSlidingExpiration = false)
     {
-        _cache = MemoryCache.Default;
-    }
-
-    public void Add<T>(string key, T? obj, DateTimeOffset? absoluteExpiration = null)
-    {
-        if (obj != null)
+        if (obj == null)
         {
-            _cache.Set(key, obj, absoluteExpiration ?? DateTimeOffset.MaxValue);
+            return;
         }
+        
+        expiration ??= DateTimeOffset.MaxValue;
+        var cacheItemPolicy = useSlidingExpiration switch
+        {
+            true => new CacheItemPolicy { SlidingExpiration = expiration.Value.Offset },
+            false => new CacheItemPolicy { AbsoluteExpiration = expiration.Value }
+        };
+        _cache.Set(key, obj, cacheItemPolicy);
     }
 
-    public Task AddAsync<T>(string key, T? obj, DateTimeOffset? absoluteExpiration = null)
+    public Task AddAsync<T>(string key, T? obj, DateTimeOffset? expiration = null, bool slidingExpiration = false)
     {
-        Add(key, obj, absoluteExpiration);
+        Add(key, obj, expiration, slidingExpiration);
         return Task.CompletedTask;
     }
 

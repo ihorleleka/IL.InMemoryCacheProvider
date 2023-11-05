@@ -7,216 +7,206 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
 {
     public class CacheProviderExtensionsTests
     {
+        private const string Key = "testkey";
+        private const string ExpectedValue = "newValue";
+        
         [Fact]
-        public async Task GetOrAddAsync_Returns_ExistingValue_When_CacheContainsKey()
+        public async Task GetOrAddAsync_Returns_ExistingValue_When_CacheContains_key()
         {
             // Arrange
             var cacheServiceMock = new Mock<ICacheProvider>();
-            var key = "testKey";
-            var expectedValue = "newValue";
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(key)).ReturnsAsync(expectedValue);
+            cacheServiceMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
             // Act
             var result = await cacheServiceMock.Object.GetOrAddAsync(
-                key,
+                Key,
                 () =>
                 {
                     throw new InvalidOperationException("Value factory should not be called.");
+#pragma warning disable CS0162 // Unreachable code detected
                     return string.Empty;
+#pragma warning restore CS0162 // Unreachable code detected
                 },
                 x => !string.IsNullOrEmpty(x),
                 null);
 
             // Assert
-            Assert.Equal(expectedValue, result);
+            Assert.Equal(ExpectedValue, result);
         }
 
         [Fact]
-        public async Task GetOrAddAsync_Returns_NewValue_When_CacheDoesNotContainKey()
+        public async Task GetOrAddAsync_Returns_NewValue_When_CacheDoesNotContain_key()
         {
             // Arrange
             var cacheServiceMock = new Mock<ICacheProvider>();
-            var key = "testKey";
-            var expectedValue = "newValue";
             var valueFactoryCalled = false;
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(key))
-                .ReturnsAsync((string)null);
+            cacheServiceMock.Setup(x => x.GetAsync<string>(Key))
+                .ReturnsAsync((string)null!);
 
             // Act
-            var result = await cacheServiceMock.Object.GetOrAddAsync(key,
+            var result = await cacheServiceMock.Object.GetOrAddAsync(Key,
                 () =>
                 {
                     valueFactoryCalled = true;
-                    return expectedValue;
+                    return ExpectedValue;
                 },
                 x => !string.IsNullOrEmpty(x),
                 null);
 
             // Assert
-            Assert.Equal(expectedValue, result);
+            Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheServiceMock.Verify(x => x.AddAsync(key, expectedValue, null), Times.Once);
+            cacheServiceMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
         }
 
         [Fact]
-        public async Task GetOrAddAsync_AsyncFactory_Returns_ExistingValue_When_CacheContainsKey()
+        public async Task GetOrAddAsync_AsyncFactory_Returns_ExistingValue_When_CacheContains_key()
         {
             // Arrange
             var cacheServiceMock = new Mock<ICacheProvider>();
-            var key = "testKey";
-            var expectedValue = "newValue";
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(key)).ReturnsAsync(expectedValue);
+            cacheServiceMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
             // Act
             var result = await cacheServiceMock.Object.GetOrAddAsync(
-                key,
-                async () =>
+                Key, () =>
                     {
                         throw new InvalidOperationException("Value factory should not be called.");
-                        return string.Empty;
+#pragma warning disable CS0162 // Unreachable code detected
+                        return Task.FromResult(string.Empty);
+#pragma warning restore CS0162 // Unreachable code detected
                     },
                 x => !string.IsNullOrEmpty(x),
                 null);
 
             // Assert
-            Assert.Equal(expectedValue, result);
+            Assert.Equal(ExpectedValue, result);
         }
 
         [Fact]
-        public async Task GetOrAddAsync_AsyncFactory_Returns_NewValue_When_CacheDoesNotContainKey()
+        public async Task GetOrAddAsync_AsyncFactory_Returns_NewValue_When_CacheDoesNotContain_key()
         {
             // Arrange
             var cacheServiceMock = new Mock<ICacheProvider>();
-            var key = "testKey";
-            var expectedValue = "newValue";
             var valueFactoryCalled = false;
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(key))
-                .ReturnsAsync((string)null);
+            cacheServiceMock.Setup(x => x.GetAsync<string>(Key))
+                .ReturnsAsync((string)null!);
 
             // Act
-            var result = await cacheServiceMock.Object.GetOrAddAsync(key,
-                async () =>
+            var result = await cacheServiceMock.Object.GetOrAddAsync(Key, () =>
                 {
                     valueFactoryCalled = true;
-                    return expectedValue;
+                    return Task.FromResult(ExpectedValue);
                 },
                 x => !string.IsNullOrEmpty(x),
                 null);
 
             // Assert
-            Assert.Equal(expectedValue, result);
+            Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheServiceMock.Verify(x => x.AddAsync(key, expectedValue, null), Times.Once);
+            cacheServiceMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
         }
 
         [Fact]
-        public void GetOrAdd_Returns_ExistingValue_When_CacheContainsKey()
+        public void GetOrAdd_Returns_ExistingValue_When_CacheContains_key()
         {
             // Arrange
             var cacheServiceMock = new Mock<ICacheProvider>();
-            var key = "testKey";
-            var expectedValue = "newValue";
-
-            cacheServiceMock.Setup(x => x.GetAsync<string>(key)).ReturnsAsync(expectedValue);
+            cacheServiceMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
             // Act
             var result = cacheServiceMock.Object.GetOrAdd(
-                key,
+                Key,
                 () =>
                 {
                     throw new InvalidOperationException("Value factory should not be called.");
+#pragma warning disable CS0162 // Unreachable code detected
                     return string.Empty;
+#pragma warning restore CS0162 // Unreachable code detected
                 },
                 x => !string.IsNullOrEmpty(x),
                 null);
 
             // Assert
-            Assert.Equal(expectedValue, result);
+            Assert.Equal(ExpectedValue, result);
         }
 
         [Fact]
-        public void GetOrAdd_Returns_NewValue_When_CacheDoesNotContainKey()
+        public void GetOrAdd_Returns_NewValue_When_CacheDoesNotContain_key()
         {
             // Arrange
             var cacheServiceMock = new Mock<ICacheProvider>();
-            var key = "testKey";
-            var expectedValue = "newValue";
             var valueFactoryCalled = false;
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(key))
-                .ReturnsAsync((string)null);
+            cacheServiceMock.Setup(x => x.GetAsync<string>(Key))
+                .ReturnsAsync((string)null!);
 
             // Act
-            var result = cacheServiceMock.Object.GetOrAdd(key,
+            var result = cacheServiceMock.Object.GetOrAdd(Key,
                 () =>
                 {
                     valueFactoryCalled = true;
-                    return expectedValue;
+                    return ExpectedValue;
                 },
                 x => !string.IsNullOrEmpty(x),
                 null);
 
             // Assert
-            Assert.Equal(expectedValue, result);
+            Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheServiceMock.Verify(x => x.AddAsync(key, expectedValue, null), Times.Once);
+            cacheServiceMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
         }
 
         [Fact]
-        public void GetOrAdd_AsyncFactory_Returns_ExistingValue_When_CacheContainsKey()
+        public void GetOrAdd_AsyncFactory_Returns_ExistingValue_When_CacheContains_key()
         {
             // Arrange
             var cacheServiceMock = new Mock<ICacheProvider>();
-            var key = "testKey";
-            var expectedValue = "newValue";
-
-            cacheServiceMock.Setup(x => x.GetAsync<string>(key)).ReturnsAsync(expectedValue);
+            cacheServiceMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
             // Act
             var result = cacheServiceMock.Object.GetOrAdd(
-                key,
-                async () =>
+                Key, 
+                () =>
                 {
                     throw new InvalidOperationException("Value factory should not be called.");
-                    return string.Empty;
+#pragma warning disable CS0162 // Unreachable code detected
+                    return Task.FromResult(string.Empty);
+#pragma warning restore CS0162 // Unreachable code detected
                 },
                 x => !string.IsNullOrEmpty(x),
                 null);
 
             // Assert
-            Assert.Equal(expectedValue, result);
+            Assert.Equal(ExpectedValue, result);
         }
 
         [Fact]
-        public void GetOrAdd_AsyncFactory_Returns_NewValue_When_CacheDoesNotContainKey()
+        public void GetOrAdd_AsyncFactory_Returns_NewValue_When_CacheDoesNotContain_key()
         {
             // Arrange
             var cacheServiceMock = new Mock<ICacheProvider>();
-            var key = "testKey";
-            var expectedValue = "newValue";
             var valueFactoryCalled = false;
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(key))
-                .ReturnsAsync((string)null);
+            cacheServiceMock.Setup(x => x.GetAsync<string>(Key))
+                .ReturnsAsync((string)null!);
 
             // Act
-            var result = cacheServiceMock.Object.GetOrAdd(key,
-                async () =>
+            var result = cacheServiceMock.Object.GetOrAdd(Key, () =>
                 {
                     valueFactoryCalled = true;
-                    return expectedValue;
+                    return Task.FromResult(ExpectedValue);
                 },
                 x => !string.IsNullOrEmpty(x),
                 null);
 
             // Assert
-            Assert.Equal(expectedValue, result);
+            Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheServiceMock.Verify(x => x.AddAsync(key, expectedValue, null), Times.Once);
+            cacheServiceMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
         }
     }
 }

@@ -2,9 +2,9 @@
 
 public interface ICacheProvider
 {
-    void Add<T>(string key, T? obj, DateTimeOffset? absoluteExpiration = null);
+    void Add<T>(string key, T? obj, DateTimeOffset? expiration = null, bool useSlidingExpiration = false);
 
-    Task AddAsync<T>(string key, T? obj, DateTimeOffset? absoluteExpiration = null);
+    Task AddAsync<T>(string key, T? obj, DateTimeOffset? expiration = null, bool useSlidingExpiration = false);
 
     T? Get<T>(string key);
 
