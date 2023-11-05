@@ -2,7 +2,7 @@
 
 namespace IL.InMemoryCacheProvider.CacheProvider;
 
-public class InMemoryCacheProvider : ICacheProvider
+public sealed class InMemoryCacheProvider : ICacheProvider
 {
     private readonly MemoryCache _cache = MemoryCache.Default;
 
