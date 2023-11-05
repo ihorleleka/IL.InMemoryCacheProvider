@@ -14,12 +14,12 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
         public async Task GetOrAddAsync_Returns_ExistingValue_When_CacheContains_key()
         {
             // Arrange
-            var cacheServiceMock = new Mock<ICacheProvider>();
+            var cacheProviderMock = new Mock<ICacheProvider>();
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
             // Act
-            var result = await cacheServiceMock.Object.GetOrAddAsync(
+            var result = await cacheProviderMock.Object.GetOrAddAsync(
                 Key,
                 () =>
                 {
@@ -39,14 +39,14 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
         public async Task GetOrAddAsync_Returns_NewValue_When_CacheDoesNotContain_key()
         {
             // Arrange
-            var cacheServiceMock = new Mock<ICacheProvider>();
+            var cacheProviderMock = new Mock<ICacheProvider>();
             var valueFactoryCalled = false;
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(Key))
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key))
                 .ReturnsAsync((string)null!);
 
             // Act
-            var result = await cacheServiceMock.Object.GetOrAddAsync(Key,
+            var result = await cacheProviderMock.Object.GetOrAddAsync(Key,
                 () =>
                 {
                     valueFactoryCalled = true;
@@ -58,19 +58,19 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheServiceMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
         }
 
         [Fact]
         public async Task GetOrAddAsync_AsyncFactory_Returns_ExistingValue_When_CacheContains_key()
         {
             // Arrange
-            var cacheServiceMock = new Mock<ICacheProvider>();
+            var cacheProviderMock = new Mock<ICacheProvider>();
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
             // Act
-            var result = await cacheServiceMock.Object.GetOrAddAsync(
+            var result = await cacheProviderMock.Object.GetOrAddAsync(
                 Key, () =>
                     {
                         throw new InvalidOperationException("Value factory should not be called.");
@@ -89,14 +89,14 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
         public async Task GetOrAddAsync_AsyncFactory_Returns_NewValue_When_CacheDoesNotContain_key()
         {
             // Arrange
-            var cacheServiceMock = new Mock<ICacheProvider>();
+            var cacheProviderMock = new Mock<ICacheProvider>();
             var valueFactoryCalled = false;
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(Key))
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key))
                 .ReturnsAsync((string)null!);
 
             // Act
-            var result = await cacheServiceMock.Object.GetOrAddAsync(Key, () =>
+            var result = await cacheProviderMock.Object.GetOrAddAsync(Key, () =>
                 {
                     valueFactoryCalled = true;
                     return Task.FromResult(ExpectedValue);
@@ -107,18 +107,18 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheServiceMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
         }
 
         [Fact]
         public void GetOrAdd_Returns_ExistingValue_When_CacheContains_key()
         {
             // Arrange
-            var cacheServiceMock = new Mock<ICacheProvider>();
-            cacheServiceMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
+            var cacheProviderMock = new Mock<ICacheProvider>();
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
             // Act
-            var result = cacheServiceMock.Object.GetOrAdd(
+            var result = cacheProviderMock.Object.GetOrAdd(
                 Key,
                 () =>
                 {
@@ -138,14 +138,14 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
         public void GetOrAdd_Returns_NewValue_When_CacheDoesNotContain_key()
         {
             // Arrange
-            var cacheServiceMock = new Mock<ICacheProvider>();
+            var cacheProviderMock = new Mock<ICacheProvider>();
             var valueFactoryCalled = false;
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(Key))
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key))
                 .ReturnsAsync((string)null!);
 
             // Act
-            var result = cacheServiceMock.Object.GetOrAdd(Key,
+            var result = cacheProviderMock.Object.GetOrAdd(Key,
                 () =>
                 {
                     valueFactoryCalled = true;
@@ -157,18 +157,18 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheServiceMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
         }
 
         [Fact]
         public void GetOrAdd_AsyncFactory_Returns_ExistingValue_When_CacheContains_key()
         {
             // Arrange
-            var cacheServiceMock = new Mock<ICacheProvider>();
-            cacheServiceMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
+            var cacheProviderMock = new Mock<ICacheProvider>();
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
             // Act
-            var result = cacheServiceMock.Object.GetOrAdd(
+            var result = cacheProviderMock.Object.GetOrAdd(
                 Key, 
                 () =>
                 {
@@ -188,14 +188,14 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
         public void GetOrAdd_AsyncFactory_Returns_NewValue_When_CacheDoesNotContain_key()
         {
             // Arrange
-            var cacheServiceMock = new Mock<ICacheProvider>();
+            var cacheProviderMock = new Mock<ICacheProvider>();
             var valueFactoryCalled = false;
 
-            cacheServiceMock.Setup(x => x.GetAsync<string>(Key))
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key))
                 .ReturnsAsync((string)null!);
 
             // Act
-            var result = cacheServiceMock.Object.GetOrAdd(Key, () =>
+            var result = cacheProviderMock.Object.GetOrAdd(Key, () =>
                 {
                     valueFactoryCalled = true;
                     return Task.FromResult(ExpectedValue);
@@ -206,7 +206,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheServiceMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
         }
     }
 }
