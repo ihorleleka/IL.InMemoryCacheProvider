@@ -12,11 +12,11 @@ public sealed class InMemoryCacheProvider : ICacheProvider
         {
             return;
         }
-        
+
         expiration ??= DateTimeOffset.MaxValue;
         var cacheItemPolicy = useSlidingExpiration switch
         {
-            true => new CacheItemPolicy { SlidingExpiration = expiration.Value.Offset },
+            true => new CacheItemPolicy { SlidingExpiration = expiration.Value - DateTimeOffset.Now },
             false => new CacheItemPolicy { AbsoluteExpiration = expiration.Value }
         };
         _cache.Set(key, obj, cacheItemPolicy);
