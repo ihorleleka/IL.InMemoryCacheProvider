@@ -1,34 +1,38 @@
-﻿using System.Runtime.Caching;
+﻿using Microsoft.Extensions.Caching.Memory;
 
 namespace IL.InMemoryCacheProvider.CacheProvider;
 
 public sealed class InMemoryCacheProvider : ICacheProvider
 {
-    private readonly MemoryCache _cache = MemoryCache.Default;
+    private readonly IMemoryCache _cache;
 
-    public void Add<T>(string key, T? obj, DateTimeOffset? expiration = null, bool useSlidingExpiration = false)
+    public InMemoryCacheProvider(MemoryCacheOptions? options = null)
+    {
+        _cache = new MemoryCache(options ?? new MemoryCacheOptions());
+    }
+
+    public void Add<T>(string key, T? obj, DateTimeOffset? expiration = null, TimeSpan? slidingExpiration = null)
     {
         if (obj == null)
         {
             return;
         }
 
-        expiration ??= DateTimeOffset.MaxValue;
-        var cacheItemPolicy = useSlidingExpiration switch
+        var cacheItemPolicy = new MemoryCacheEntryOptions
         {
-            true => new CacheItemPolicy { SlidingExpiration = expiration.Value - DateTimeOffset.Now },
-            false => new CacheItemPolicy { AbsoluteExpiration = expiration.Value }
+            AbsoluteExpiration = expiration,
+            SlidingExpiration = slidingExpiration
         };
         _cache.Set(key, obj, cacheItemPolicy);
     }
 
-    public Task AddAsync<T>(string key, T? obj, DateTimeOffset? expiration = null, bool slidingExpiration = false)
+    public Task AddAsync<T>(string key, T? obj, DateTimeOffset? expiration = null, TimeSpan? slidingExpiration = null)
     {
         Add(key, obj, expiration, slidingExpiration);
         return Task.CompletedTask;
     }
 
-    public T? Get<T>(string key) => (T)_cache.Get(key);
+    public T? Get<T>(string key) => _cache.Get<T>(key);
 
     public Task<T?> GetAsync<T>(string key)
     {
@@ -48,6 +52,6 @@ public sealed class InMemoryCacheProvider : ICacheProvider
 
     public bool HasKey(string key)
     {
-        return _cache.Contains(key);
+        return _cache.TryGetValue(key, out _);
     }
 }

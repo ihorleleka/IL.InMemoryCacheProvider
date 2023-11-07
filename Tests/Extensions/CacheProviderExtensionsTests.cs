@@ -9,7 +9,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
     {
         private const string Key = "testkey";
         private const string ExpectedValue = "newValue";
-        
+
         [Fact]
         public async Task GetOrAddAsync_Returns_ExistingValue_When_CacheContains_key()
         {
@@ -28,8 +28,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
                     return string.Empty;
 #pragma warning restore CS0162 // Unreachable code detected
                 },
-                x => !string.IsNullOrEmpty(x),
-                null);
+                x => !string.IsNullOrEmpty(x));
 
             // Assert
             Assert.Equal(ExpectedValue, result);
@@ -52,13 +51,12 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
                     valueFactoryCalled = true;
                     return ExpectedValue;
                 },
-                x => !string.IsNullOrEmpty(x),
-                null);
+                x => !string.IsNullOrEmpty(x));
 
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, null), Times.Once);
         }
 
         [Fact]
@@ -72,14 +70,13 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Act
             var result = await cacheProviderMock.Object.GetOrAddAsync(
                 Key, () =>
-                    {
-                        throw new InvalidOperationException("Value factory should not be called.");
+                {
+                    throw new InvalidOperationException("Value factory should not be called.");
 #pragma warning disable CS0162 // Unreachable code detected
-                        return Task.FromResult(string.Empty);
+                    return Task.FromResult(string.Empty);
 #pragma warning restore CS0162 // Unreachable code detected
-                    },
-                x => !string.IsNullOrEmpty(x),
-                null);
+                },
+                x => !string.IsNullOrEmpty(x));
 
             // Assert
             Assert.Equal(ExpectedValue, result);
@@ -101,13 +98,12 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
                     valueFactoryCalled = true;
                     return Task.FromResult(ExpectedValue);
                 },
-                x => !string.IsNullOrEmpty(x),
-                null);
+                x => !string.IsNullOrEmpty(x));
 
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, null), Times.Once);
         }
 
         [Fact]
@@ -127,8 +123,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
                     return string.Empty;
 #pragma warning restore CS0162 // Unreachable code detected
                 },
-                x => !string.IsNullOrEmpty(x),
-                null);
+                x => !string.IsNullOrEmpty(x));
 
             // Assert
             Assert.Equal(ExpectedValue, result);
@@ -151,13 +146,12 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
                     valueFactoryCalled = true;
                     return ExpectedValue;
                 },
-                x => !string.IsNullOrEmpty(x),
-                null);
+                x => !string.IsNullOrEmpty(x));
 
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, null), Times.Once);
         }
 
         [Fact]
@@ -169,7 +163,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
 
             // Act
             var result = cacheProviderMock.Object.GetOrAdd(
-                Key, 
+                Key,
                 () =>
                 {
                     throw new InvalidOperationException("Value factory should not be called.");
@@ -177,8 +171,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
                     return Task.FromResult(string.Empty);
 #pragma warning restore CS0162 // Unreachable code detected
                 },
-                x => !string.IsNullOrEmpty(x),
-                null);
+                x => !string.IsNullOrEmpty(x));
 
             // Assert
             Assert.Equal(ExpectedValue, result);
@@ -200,13 +193,120 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
                     valueFactoryCalled = true;
                     return Task.FromResult(ExpectedValue);
                 },
-                x => !string.IsNullOrEmpty(x),
-                null);
+                x => !string.IsNullOrEmpty(x));
 
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, false), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, null), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetOrAddAsync_SlidingExpiration_Returns_ExistingValue_When_CacheContains_Key()
+        {
+            // Arrange
+            var cacheProviderMock = new Mock<ICacheProvider>();
+            var slidingExpiration = TimeSpan.FromMinutes(30);
+
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
+
+            // Act
+            var result = await cacheProviderMock.Object.GetOrAddAsync(
+                Key,
+                () =>
+                {
+                    throw new InvalidOperationException("Value factory should not be called.");
+#pragma warning disable CS0162 // Unreachable code detected
+                    return string.Empty;
+#pragma warning restore CS0162 // Unreachable code detected
+                },
+                x => !string.IsNullOrEmpty(x),
+                slidingExpiration: slidingExpiration);
+
+            // Assert
+            Assert.Equal(ExpectedValue, result);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, slidingExpiration), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetOrAddAsync_SlidingExpiration_Returns_NewValue_When_CacheDoesNotContain_Key()
+        {
+            // Arrange
+            var cacheProviderMock = new Mock<ICacheProvider>();
+            var valueFactoryCalled = false;
+            var slidingExpiration = TimeSpan.FromMinutes(30);
+
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key))
+                .ReturnsAsync((string)null!);
+
+            // Act
+            var result = await cacheProviderMock.Object.GetOrAddAsync(Key,
+                () =>
+                {
+                    valueFactoryCalled = true;
+                    return ExpectedValue;
+                },
+                x => !string.IsNullOrEmpty(x),
+                slidingExpiration: slidingExpiration);
+
+            // Assert
+            Assert.Equal(ExpectedValue, result);
+            Assert.True(valueFactoryCalled, "Value factory should be called.");
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, slidingExpiration), Times.Once);
+        }
+
+        [Fact]
+        public void GetOrAdd_SlidingExpiration_Returns_ExistingValue_When_CacheContains_Key()
+        {
+            // Arrange
+            var cacheProviderMock = new Mock<ICacheProvider>();
+            var slidingExpiration = TimeSpan.FromMinutes(30);
+
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
+
+            // Act
+            var result = cacheProviderMock.Object.GetOrAdd(
+                Key,
+                () =>
+                {
+                    throw new InvalidOperationException("Value factory should not be called.");
+#pragma warning disable CS0162 // Unreachable code detected
+                    return string.Empty;
+#pragma warning restore CS0162 // Unreachable code detected
+                },
+                x => !string.IsNullOrEmpty(x),
+                slidingExpiration: slidingExpiration);
+
+            // Assert
+            Assert.Equal(ExpectedValue, result);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, slidingExpiration), Times.Never);
+        }
+
+        [Fact]
+        public void GetOrAdd_SlidingExpiration_Returns_NewValue_When_CacheDoesNotContain_Key()
+        {
+            // Arrange
+            var cacheProviderMock = new Mock<ICacheProvider>();
+            var valueFactoryCalled = false;
+            var slidingExpiration = TimeSpan.FromMinutes(30);
+
+            cacheProviderMock.Setup(x => x.GetAsync<string>(Key))
+                .ReturnsAsync((string)null!);
+
+            // Act
+            var result = cacheProviderMock.Object.GetOrAdd(Key,
+                () =>
+                {
+                    valueFactoryCalled = true;
+                    return ExpectedValue;
+                },
+                x => !string.IsNullOrEmpty(x),
+                slidingExpiration: slidingExpiration);
+
+            // Assert
+            Assert.Equal(ExpectedValue, result);
+            Assert.True(valueFactoryCalled, "Value factory should be called.");
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, slidingExpiration), Times.Once);
         }
     }
 }
