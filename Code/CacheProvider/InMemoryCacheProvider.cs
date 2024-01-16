@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using IL.InMemoryCacheProvider.Extensions;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace IL.InMemoryCacheProvider.CacheProvider;
 
@@ -53,5 +54,31 @@ public sealed class InMemoryCacheProvider : ICacheProvider
     public bool HasKey(string key)
     {
         return _cache.TryGetValue(key, out _);
+    }
+
+    public Task<IEnumerable<string>> GetAllKeysAsync()
+    {
+        return Task.FromResult(GetAllKeys());
+    }
+
+    public IEnumerable<string> GetAllKeys()
+    {
+        return _cache.GetKeys<string>();
+    }
+
+    public async Task DeleteAllAsync()
+    {
+        foreach (var key in await GetAllKeysAsync())
+        {
+            await DeleteAsync(key);
+        }
+    }
+
+    public void DeleteAll()
+    {
+        foreach (var key in GetAllKeys())
+        {
+            Delete(key);
+        }
     }
 }

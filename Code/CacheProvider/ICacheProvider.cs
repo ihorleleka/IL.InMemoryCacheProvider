@@ -15,4 +15,12 @@ public interface ICacheProvider
     Task DeleteAsync(string key);
 
     bool HasKey(string key);
+
+    Task<IEnumerable<string>> GetAllKeysAsync();
+
+    IEnumerable<string> GetAllKeys();
+
+    Task DeleteAllAsync();
+
+    void DeleteAll();
 }
