@@ -5,7 +5,7 @@ namespace IL.InMemoryCacheProvider.CacheProvider;
 
 public sealed class InMemoryCacheProvider : ICacheProvider
 {
-    private readonly IMemoryCache _cache;
+    private readonly MemoryCache _cache;
 
     public InMemoryCacheProvider(MemoryCacheOptions? options = null)
     {

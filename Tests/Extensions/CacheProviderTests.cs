@@ -1,6 +1,4 @@
-﻿using IL.InMemoryCacheProvider.CacheProvider;
-using IL.InMemoryCacheProvider.Extensions;
-using Moq;
+﻿using IL.InMemoryCacheProvider.Extensions;
 using Xunit;
 
 namespace IL.InMemoryCacheProvider.Tests.Extensions
