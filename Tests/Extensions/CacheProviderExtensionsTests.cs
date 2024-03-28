@@ -1,5 +1,6 @@
 ﻿using IL.InMemoryCacheProvider.CacheProvider;
 using IL.InMemoryCacheProvider.Extensions;
+using IL.InMemoryCacheProvider.Options;
 using Moq;
 using Xunit;
 
@@ -206,7 +207,10 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
         {
             // Arrange
             var cacheProviderMock = new Mock<ICacheProvider>();
-            var slidingExpiration = TimeSpan.FromMinutes(30);
+            var expirationOptions = new ExpirationOptions
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(1)
+            };
 
             cacheProviderMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
@@ -221,11 +225,11 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
 #pragma warning restore CS0162 // Unreachable code detected
                 },
                 x => !string.IsNullOrEmpty(x),
-                slidingExpiration: slidingExpiration);
+                expirationOptions: expirationOptions);
 
             // Assert
             Assert.Equal(ExpectedValue, result);
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, slidingExpiration), Times.Never);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, expirationOptions, null), Times.Never);
         }
 
         [Fact]
@@ -234,7 +238,10 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Arrange
             var cacheProviderMock = new Mock<ICacheProvider>();
             var valueFactoryCalled = false;
-            var slidingExpiration = TimeSpan.FromMinutes(30);
+            var expirationOptions = new ExpirationOptions
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(1)
+            };
 
             cacheProviderMock.Setup(x => x.GetAsync<string>(Key))
                 .ReturnsAsync((string)null!);
@@ -247,12 +254,12 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
                     return ExpectedValue;
                 },
                 x => !string.IsNullOrEmpty(x),
-                slidingExpiration: slidingExpiration);
+                expirationOptions: expirationOptions);
 
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, slidingExpiration), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, expirationOptions, null), Times.Once);
         }
 
         [Fact]
@@ -260,7 +267,10 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
         {
             // Arrange
             var cacheProviderMock = new Mock<ICacheProvider>();
-            var slidingExpiration = TimeSpan.FromMinutes(30);
+            var expirationOptions = new ExpirationOptions
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(1)
+            };
 
             cacheProviderMock.Setup(x => x.GetAsync<string>(Key)).ReturnsAsync(ExpectedValue);
 
@@ -275,11 +285,11 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
 #pragma warning restore CS0162 // Unreachable code detected
                 },
                 x => !string.IsNullOrEmpty(x),
-                slidingExpiration: slidingExpiration);
+                expirationOptions: expirationOptions);
 
             // Assert
             Assert.Equal(ExpectedValue, result);
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, slidingExpiration), Times.Never);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, expirationOptions, null), Times.Never);
         }
 
         [Fact]
@@ -288,7 +298,10 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Arrange
             var cacheProviderMock = new Mock<ICacheProvider>();
             var valueFactoryCalled = false;
-            var slidingExpiration = TimeSpan.FromMinutes(30);
+            var expirationOptions = new ExpirationOptions
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(1)
+            };
 
             cacheProviderMock.Setup(x => x.GetAsync<string>(Key))
                 .ReturnsAsync((string)null!);
@@ -301,12 +314,12 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
                     return ExpectedValue;
                 },
                 x => !string.IsNullOrEmpty(x),
-                slidingExpiration: slidingExpiration);
+                expirationOptions: expirationOptions);
 
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, slidingExpiration), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, expirationOptions, null), Times.Once);
         }
     }
 }

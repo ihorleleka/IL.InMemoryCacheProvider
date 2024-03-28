@@ -1,4 +1,5 @@
 ﻿using IL.InMemoryCacheProvider.CacheProvider;
+using IL.InMemoryCacheProvider.Options;
 using IL.Misc.Concurrency;
 
 namespace IL.InMemoryCacheProvider.Extensions;
@@ -8,9 +9,9 @@ public static class CacheProviderExtensions
     public static T GetOrAdd<T>(this ICacheProvider cacheProvider,
         string key,
         Func<T> valueFactory,
-        Func<T, bool>? cacheCreationCondition = null,
-        DateTimeOffset? expiration = null,
-        TimeSpan? slidingExpiration = null)
+        Func<T, bool>? cacheCreationCondition = default,
+        ExpirationOptions? expirationOptions = default,
+        IEnumerable<string>? tags = default)
     {
         using (LockManager.GetLock(key))
         {
@@ -21,7 +22,7 @@ public static class CacheProviderExtensions
             }
 
             value = valueFactory();
-            AddCacheEntryIfJustified(cacheProvider, key, value, cacheCreationCondition, expiration, slidingExpiration);
+            AddCacheEntryIfJustified(cacheProvider, key, value, cacheCreationCondition, expirationOptions, tags);
 
             return value;
         }
@@ -30,9 +31,9 @@ public static class CacheProviderExtensions
     public static T GetOrAdd<T>(this ICacheProvider cacheProvider,
         string key,
         Func<Task<T>> valueFactory,
-        Func<T, bool>? cacheCreationCondition = null,
-        DateTimeOffset? expiration = null,
-        TimeSpan? slidingExpiration = null)
+        Func<T, bool>? cacheCreationCondition = default,
+        ExpirationOptions? expirationOptions = default,
+        IEnumerable<string>? tags = default)
     {
         using (LockManager.GetLock(key))
         {
@@ -43,27 +44,31 @@ public static class CacheProviderExtensions
             }
 
             value = valueFactory().Result;
-            AddCacheEntryIfJustified(cacheProvider, key, value, cacheCreationCondition, expiration, slidingExpiration);
+            AddCacheEntryIfJustified(cacheProvider, key, value, cacheCreationCondition, expirationOptions, tags);
 
             return value;
         }
     }
 
-    private static void AddCacheEntryIfJustified<T>(ICacheProvider cacheProvider, string key,
-        T value, Func<T, bool>? cacheCreationCondition, DateTimeOffset? expiration, TimeSpan? slidingExpiration = null)
+    private static void AddCacheEntryIfJustified<T>(ICacheProvider cacheProvider,
+        string key,
+        T value,
+        Func<T, bool>? cacheCreationCondition,
+        ExpirationOptions? expirationOptions, 
+        IEnumerable<string>? tags)
     {
         if (cacheCreationCondition is null || cacheCreationCondition(value))
         {
-            cacheProvider.AddAsync(key, value, expiration, slidingExpiration).Wait();
+            cacheProvider.AddAsync(key, value, expirationOptions, tags).Wait();
         }
     }
 
     public static async Task<T> GetOrAddAsync<T>(this ICacheProvider cacheProvider,
         string key,
         Func<T> valueFactory,
-        Func<T, bool>? cacheCreationCondition = null,
-        DateTimeOffset? expiration = null,
-        TimeSpan? slidingExpiration = null)
+        Func<T, bool>? cacheCreationCondition = default,
+        ExpirationOptions? expirationOptions = default,
+        IEnumerable<string>? tags = default)
     {
         using (await LockManager.GetLockAsync(key))
         {
@@ -74,7 +79,7 @@ public static class CacheProviderExtensions
             }
 
             value = valueFactory();
-            await AddCacheEntryIfJustifiedAsync(cacheProvider, key, value, cacheCreationCondition, expiration, slidingExpiration);
+            await AddCacheEntryIfJustifiedAsync(cacheProvider, key, value, cacheCreationCondition, expirationOptions, tags);
 
             return value;
         }
@@ -83,9 +88,9 @@ public static class CacheProviderExtensions
     public static async Task<T> GetOrAddAsync<T>(this ICacheProvider cacheProvider,
         string key,
         Func<Task<T>> valueFactory,
-        Func<T, bool>? cacheCreationCondition = null,
-        DateTimeOffset? expiration = null,
-        TimeSpan? slidingExpiration = null)
+        Func<T, bool>? cacheCreationCondition = default,
+        ExpirationOptions? expirationOptions = default,
+        IEnumerable<string>? tags = default)
     {
         using (await LockManager.GetLockAsync(key))
         {
@@ -96,18 +101,22 @@ public static class CacheProviderExtensions
             }
 
             value = await valueFactory();
-            await AddCacheEntryIfJustifiedAsync(cacheProvider, key, value, cacheCreationCondition, expiration, slidingExpiration);
+            await AddCacheEntryIfJustifiedAsync(cacheProvider, key, value, cacheCreationCondition, expirationOptions, tags);
 
             return value;
         }
     }
 
-    private static async Task AddCacheEntryIfJustifiedAsync<T>(ICacheProvider cacheProvider, string key,
-        T value, Func<T, bool>? cacheCreationCondition, DateTimeOffset? expiration, TimeSpan? slidingExpiration = null)
+    private static async Task AddCacheEntryIfJustifiedAsync<T>(ICacheProvider cacheProvider,
+        string key,
+        T value,
+        Func<T, bool>? cacheCreationCondition,
+        ExpirationOptions? expirationOptions, 
+        IEnumerable<string>? tags)
     {
         if (cacheCreationCondition is null || cacheCreationCondition(value))
         {
-            await cacheProvider.AddAsync(key, value, expiration, slidingExpiration);
+            await cacheProvider.AddAsync(key, value, expirationOptions, tags);
         }
     }
 }

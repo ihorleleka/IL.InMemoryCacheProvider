@@ -1,10 +1,12 @@
-﻿namespace IL.InMemoryCacheProvider.CacheProvider;
+﻿using IL.InMemoryCacheProvider.Options;
+
+namespace IL.InMemoryCacheProvider.CacheProvider;
 
 public interface ICacheProvider
 {
-    void Add<T>(string key, T? obj, DateTimeOffset? expiration = null, TimeSpan? slidingExpiration = null);
+    void Add<T>(string key, T? obj, ExpirationOptions? expirationOptions = default, IEnumerable<string>? tags = default);
 
-    Task AddAsync<T>(string key, T? obj, DateTimeOffset? expiration = null, TimeSpan? slidingExpiration = null);
+    Task AddAsync<T>(string key, T? obj, ExpirationOptions? expirationOptions = default, IEnumerable<string>? tags = default);
 
     T? Get<T>(string key);
 
@@ -13,6 +15,10 @@ public interface ICacheProvider
     void Delete(string key);
 
     Task DeleteAsync(string key);
+    
+    void EvictByTag(string tag);
+
+    Task EvictByTagAsync(string tag);
 
     bool HasKey(string key);
 

@@ -6,6 +6,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
     public class CacheProviderTests
     {
         private const string Key = "testkey";
+        private const string Tag = "testTag";
         private const string ExpectedValue = "newValue";
 
         [Fact]
@@ -29,6 +30,24 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             var cacheProvider = new CacheProvider.InMemoryCacheProvider();
             await cacheProvider.GetOrAddAsync(Key, () => ExpectedValue);
             await cacheProvider.DeleteAllAsync();
+
+            // Act
+            var result = await cacheProvider.GetAllKeysAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task Add_Tags_And_Eviction_By_Tag_For_Cache_Objects()
+        {
+            // Arrange
+            var cacheProvider = new CacheProvider.InMemoryCacheProvider();
+            await cacheProvider.GetOrAddAsync(Key,
+                () => ExpectedValue,
+                tags: new[] { Tag });
+            
+            await cacheProvider.EvictByTagAsync(Tag);
 
             // Act
             var result = await cacheProvider.GetAllKeysAsync();
