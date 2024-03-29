@@ -68,9 +68,10 @@ public static class CacheProviderExtensions
         Func<T> valueFactory,
         Func<T, bool>? cacheCreationCondition = default,
         ExpirationOptions? expirationOptions = default,
-        IEnumerable<string>? tags = default)
+        IEnumerable<string>? tags = default,
+        CancellationToken cancellationToken = default)
     {
-        using (await LockManager.GetLockAsync(key))
+        using (await LockManager.GetLockAsync(key, cancellationToken: cancellationToken))
         {
             var value = await cacheProvider.GetAsync<T>(key);
             if (value != null)
@@ -90,9 +91,10 @@ public static class CacheProviderExtensions
         Func<Task<T>> valueFactory,
         Func<T, bool>? cacheCreationCondition = default,
         ExpirationOptions? expirationOptions = default,
-        IEnumerable<string>? tags = default)
+        IEnumerable<string>? tags = default,
+        CancellationToken cancellationToken = default)
     {
-        using (await LockManager.GetLockAsync(key))
+        using (await LockManager.GetLockAsync(key, cancellationToken: cancellationToken))
         {
             var value = await cacheProvider.GetAsync<T>(key);
             if (value != null)
