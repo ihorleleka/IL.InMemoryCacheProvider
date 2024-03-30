@@ -114,29 +114,45 @@ public sealed class InMemoryCacheProvider : ICacheProvider
         return _cache.TryGetValue(key, out _);
     }
 
-    public Task<IEnumerable<string>> GetAllKeysAsync()
+    public Task<IEnumerable<string>> GetAllKeysAsync(Predicate<string>? filter = default)
     {
-        return Task.FromResult(GetAllKeys());
+        return Task.FromResult(GetAllKeys(filter));
     }
 
-    public IEnumerable<string> GetAllKeys()
+    public IEnumerable<string> GetAllKeys(Predicate<string>? filter = default)
     {
-        return _cache.GetKeys<string>();
+        return _cache
+            .GetKeys<string>()
+            .Where(cacheKey => filter == null || filter(cacheKey));
     }
 
-    public async Task DeleteAllAsync()
+    public Task DeleteAllAsync(Predicate<string>? filter = default)
     {
-        foreach (var key in await GetAllKeysAsync())
-        {
-            await DeleteAsync(key);
-        }
+        DeleteAll(filter);
+        return Task.CompletedTask;
     }
 
-    public void DeleteAll()
+    public void DeleteAll(Predicate<string>? filter = default)
     {
-        foreach (var key in GetAllKeys())
+        foreach (var key in GetAllKeys(filter))
         {
             Delete(key);
+        }
+
+        if (filter == default)
+        {
+            TagIndex.Clear();
+        }
+        else
+        {
+            foreach (var entry in TagIndex)
+            {
+                entry.Value.RemoveWhere(filter);
+                if (entry.Value.Count == 0)
+                {
+                    TagIndex.TryRemove(entry);
+                }
+            }
         }
     }
 }

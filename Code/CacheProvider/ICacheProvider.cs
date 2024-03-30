@@ -22,11 +22,11 @@ public interface ICacheProvider
 
     bool HasKey(string key);
 
-    Task<IEnumerable<string>> GetAllKeysAsync();
+    Task<IEnumerable<string>> GetAllKeysAsync(Predicate<string>? filter = default);
 
-    IEnumerable<string> GetAllKeys();
+    IEnumerable<string> GetAllKeys(Predicate<string>? filter = default);
 
-    Task DeleteAllAsync();
+    Task DeleteAllAsync(Predicate<string>? filter = default);
 
-    void DeleteAll();
+    void DeleteAll(Predicate<string>? filter = default);
 }
