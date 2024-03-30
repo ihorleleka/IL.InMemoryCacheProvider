@@ -9,7 +9,7 @@ public static class CacheProviderExtensions
     public static T GetOrAdd<T>(this ICacheProvider cacheProvider,
         string key,
         Func<T> valueFactory,
-        Func<T, bool>? cacheCreationCondition = default,
+        Predicate<T>? cacheCreationCondition = default,
         ExpirationOptions? expirationOptions = default,
         IEnumerable<string>? tags = default)
     {
@@ -31,7 +31,7 @@ public static class CacheProviderExtensions
     public static T GetOrAdd<T>(this ICacheProvider cacheProvider,
         string key,
         Func<Task<T>> valueFactory,
-        Func<T, bool>? cacheCreationCondition = default,
+        Predicate<T>? cacheCreationCondition = default,
         ExpirationOptions? expirationOptions = default,
         IEnumerable<string>? tags = default)
     {
@@ -53,7 +53,7 @@ public static class CacheProviderExtensions
     private static void AddCacheEntryIfJustified<T>(ICacheProvider cacheProvider,
         string key,
         T value,
-        Func<T, bool>? cacheCreationCondition,
+        Predicate<T>? cacheCreationCondition,
         ExpirationOptions? expirationOptions, 
         IEnumerable<string>? tags)
     {
@@ -66,7 +66,7 @@ public static class CacheProviderExtensions
     public static async Task<T> GetOrAddAsync<T>(this ICacheProvider cacheProvider,
         string key,
         Func<T> valueFactory,
-        Func<T, bool>? cacheCreationCondition = default,
+        Predicate<T>? cacheCreationCondition = default,
         ExpirationOptions? expirationOptions = default,
         IEnumerable<string>? tags = default,
         CancellationToken cancellationToken = default)
@@ -89,7 +89,7 @@ public static class CacheProviderExtensions
     public static async Task<T> GetOrAddAsync<T>(this ICacheProvider cacheProvider,
         string key,
         Func<Task<T>> valueFactory,
-        Func<T, bool>? cacheCreationCondition = default,
+        Predicate<T>? cacheCreationCondition = default,
         ExpirationOptions? expirationOptions = default,
         IEnumerable<string>? tags = default,
         CancellationToken cancellationToken = default)
@@ -112,7 +112,7 @@ public static class CacheProviderExtensions
     private static async Task AddCacheEntryIfJustifiedAsync<T>(ICacheProvider cacheProvider,
         string key,
         T value,
-        Func<T, bool>? cacheCreationCondition,
+        Predicate<T>? cacheCreationCondition,
         ExpirationOptions? expirationOptions, 
         IEnumerable<string>? tags)
     {

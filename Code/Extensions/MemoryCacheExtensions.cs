@@ -12,8 +12,9 @@ public static class MemoryCacheExtensions
     private static readonly Lazy<Func<MemoryCache, object>> GetEntries6 =
         new(() => ((Func<MemoryCache, object>)Delegate.CreateDelegate(
             typeof(Func<MemoryCache, object>),
-            typeof(MemoryCache).GetProperty("EntriesCollection", BindingFlags.NonPublic | BindingFlags.Instance)!.GetGetMethod(true),
-            throwOnBindFailure: true))!);
+            typeof(MemoryCache).GetProperty("EntriesCollection", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .GetGetMethod(true)!,
+            throwOnBindFailure: true)!));
 
     #endregion
 
@@ -32,11 +33,11 @@ public static class MemoryCacheExtensions
 
     private static Func<TParam, TReturn> CreateGetter<TParam, TReturn>(FieldInfo? field)
     {
-        var methodName = $"{field.ReflectedType.FullName}.get_{field.Name}";
+        var methodName = $"{field?.ReflectedType?.FullName}.get_{field?.Name}";
         var method = new DynamicMethod(methodName, typeof(TReturn), new[] { typeof(TParam) }, typeof(TParam), true);
         var ilGen = method.GetILGenerator();
         ilGen.Emit(OpCodes.Ldarg_0);
-        ilGen.Emit(OpCodes.Ldfld, field);
+        ilGen.Emit(OpCodes.Ldfld, field!);
         ilGen.Emit(OpCodes.Ret);
         return (Func<TParam, TReturn>)method.CreateDelegate(typeof(Func<TParam, TReturn>));
     }
@@ -44,7 +45,7 @@ public static class MemoryCacheExtensions
     #endregion
 
     private static readonly Func<MemoryCache, IDictionary> GetEntries =
-        Assembly.GetAssembly(typeof(MemoryCache)).GetName().Version.Major < 7
+        Assembly.GetAssembly(typeof(MemoryCache))!.GetName().Version!.Major < 7
             ? cache => (IDictionary)GetEntries6.Value(cache)
             : cache => GetEntries7.Value(GetCoherentState.Value(cache));
 
