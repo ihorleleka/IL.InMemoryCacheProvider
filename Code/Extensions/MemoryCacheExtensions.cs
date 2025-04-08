@@ -12,7 +12,7 @@ public static class MemoryCacheExtensions
     private static readonly Lazy<Func<MemoryCache, object>> GetEntries6 =
         new(() => ((Func<MemoryCache, object>)Delegate.CreateDelegate(
             typeof(Func<MemoryCache, object>),
-            typeof(MemoryCache).GetProperty("EntriesCollection", BindingFlags.NonPublic | BindingFlags.Instance)!
+            typeof(MemoryCache).GetProperty("StringKeyEntriesCollection", BindingFlags.NonPublic | BindingFlags.Instance)!
                 .GetGetMethod(true)!,
             throwOnBindFailure: true)!));
 
@@ -29,7 +29,7 @@ public static class MemoryCacheExtensions
         new(() =>
             CreateGetter<object, IDictionary>(typeof(MemoryCache)
                 .GetNestedType("CoherentState", BindingFlags.NonPublic)
-                ?.GetField("_entries", BindingFlags.NonPublic | BindingFlags.Instance)));
+                ?.GetField("_stringEntries", BindingFlags.NonPublic | BindingFlags.Instance)));
 
     private static Func<TParam, TReturn> CreateGetter<TParam, TReturn>(FieldInfo? field)
     {
@@ -47,7 +47,11 @@ public static class MemoryCacheExtensions
     private static readonly Func<MemoryCache, IDictionary> GetEntries =
         Assembly.GetAssembly(typeof(MemoryCache))!.GetName().Version!.Major < 7
             ? cache => (IDictionary)GetEntries6.Value(cache)
-            : cache => GetEntries7.Value(GetCoherentState.Value(cache));
+            : cache =>
+            {
+                var coherentState = GetCoherentState.Value(cache);
+                return GetEntries7.Value(coherentState);
+            };
 
     public static ICollection GetKeys(this IMemoryCache memoryCache) => GetEntries((MemoryCache)memoryCache).Keys;
 
