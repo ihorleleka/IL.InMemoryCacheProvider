@@ -57,7 +57,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, null), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null), Times.Once);
         }
 
         [Fact]
@@ -104,7 +104,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, null), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null), Times.Once);
         }
 
         [Fact]
@@ -152,7 +152,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, null), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null), Times.Once);
         }
 
         [Fact]
@@ -199,7 +199,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null, null), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, null), Times.Once);
         }
 
         [Fact]
@@ -259,7 +259,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, expirationOptions, null), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, expirationOptions), Times.Once);
         }
 
         [Fact]
@@ -319,7 +319,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             // Assert
             Assert.Equal(ExpectedValue, result);
             Assert.True(valueFactoryCalled, "Value factory should be called.");
-            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, expirationOptions, null), Times.Once);
+            cacheProviderMock.Verify(x => x.AddAsync(Key, ExpectedValue, expirationOptions), Times.Once);
         }
     }
 }

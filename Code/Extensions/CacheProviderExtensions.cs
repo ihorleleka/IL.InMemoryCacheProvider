@@ -9,9 +9,9 @@ public static class CacheProviderExtensions
     public static T GetOrAdd<T>(this ICacheProvider cacheProvider,
         string key,
         Func<T> valueFactory,
-        Predicate<T>? cacheCreationCondition = default,
-        ExpirationOptions? expirationOptions = default,
-        IEnumerable<string>? tags = default)
+        Predicate<T>? cacheCreationCondition = null,
+        ExpirationOptions? expirationOptions = null,
+        params string[] tags)
     {
         using (LockManager.GetLock(key))
         {
@@ -31,9 +31,9 @@ public static class CacheProviderExtensions
     public static T GetOrAdd<T>(this ICacheProvider cacheProvider,
         string key,
         Func<Task<T>> valueFactory,
-        Predicate<T>? cacheCreationCondition = default,
-        ExpirationOptions? expirationOptions = default,
-        IEnumerable<string>? tags = default)
+        Predicate<T>? cacheCreationCondition = null,
+        ExpirationOptions? expirationOptions = null,
+        params string[] tags)
     {
         using (LockManager.GetLock(key))
         {
@@ -54,8 +54,8 @@ public static class CacheProviderExtensions
         string key,
         T value,
         Predicate<T>? cacheCreationCondition,
-        ExpirationOptions? expirationOptions, 
-        IEnumerable<string>? tags)
+        ExpirationOptions? expirationOptions,
+        params string[] tags)
     {
         if (cacheCreationCondition is null || cacheCreationCondition(value))
         {
@@ -66,10 +66,10 @@ public static class CacheProviderExtensions
     public static async Task<T> GetOrAddAsync<T>(this ICacheProvider cacheProvider,
         string key,
         Func<T> valueFactory,
-        Predicate<T>? cacheCreationCondition = default,
-        ExpirationOptions? expirationOptions = default,
-        IEnumerable<string>? tags = default,
-        CancellationToken cancellationToken = default)
+        Predicate<T>? cacheCreationCondition = null,
+        ExpirationOptions? expirationOptions = null,
+        CancellationToken cancellationToken = default,
+        params string[] tags)
     {
         using (await LockManager.GetLockAsync(key, cancellationToken: cancellationToken))
         {
@@ -89,10 +89,10 @@ public static class CacheProviderExtensions
     public static async Task<T> GetOrAddAsync<T>(this ICacheProvider cacheProvider,
         string key,
         Func<Task<T>> valueFactory,
-        Predicate<T>? cacheCreationCondition = default,
-        ExpirationOptions? expirationOptions = default,
-        IEnumerable<string>? tags = default,
-        CancellationToken cancellationToken = default)
+        Predicate<T>? cacheCreationCondition = null,
+        ExpirationOptions? expirationOptions = null,
+        CancellationToken cancellationToken = default,
+        params string[] tags)
     {
         using (await LockManager.GetLockAsync(key, cancellationToken: cancellationToken))
         {
@@ -113,8 +113,8 @@ public static class CacheProviderExtensions
         string key,
         T value,
         Predicate<T>? cacheCreationCondition,
-        ExpirationOptions? expirationOptions, 
-        IEnumerable<string>? tags)
+        ExpirationOptions? expirationOptions,
+        params string[] tags)
     {
         if (cacheCreationCondition is null || cacheCreationCondition(value))
         {

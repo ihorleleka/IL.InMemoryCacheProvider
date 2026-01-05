@@ -45,7 +45,7 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
             var cacheProvider = new CacheProvider.InMemoryCacheProvider();
             await cacheProvider.GetOrAddAsync(Key,
                 () => ExpectedValue,
-                tags: new[] { Tag });
+                tags: [Tag]);
             
             await cacheProvider.EvictByTagAsync(Tag);
 

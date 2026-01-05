@@ -1,22 +1,18 @@
 ﻿using System.Collections.Concurrent;
-using IL.InMemoryCacheProvider.Extensions;
 using IL.InMemoryCacheProvider.Options;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace IL.InMemoryCacheProvider.CacheProvider;
 
-public sealed class InMemoryCacheProvider : ICacheProvider
+public sealed class InMemoryCacheProvider(MemoryCacheOptions? options = null) : ICacheProvider
 {
-    private static readonly ConcurrentDictionary<string, HashSet<string>> TagIndex = new();
-    private readonly MemoryCache _cache;
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _tagIndex = new();
+#if NET8_0
+    private readonly ConcurrentDictionary<string, byte> _allKeys = new();
+#endif
+    private readonly MemoryCache _cache = new(options ?? new MemoryCacheOptions());
 
-    public InMemoryCacheProvider(MemoryCacheOptions? options = null)
-    {
-        _cache = new MemoryCache(options ?? new MemoryCacheOptions());
-    }
-
-    public void Add<T>(string key, T? obj, ExpirationOptions? expirationOptions = default,
-        IEnumerable<string>? tags = default)
+    public void Add<T>(string key, T? obj, ExpirationOptions? expirationOptions = null, params string[] tags)
     {
         if (obj == null)
         {
@@ -29,44 +25,63 @@ public sealed class InMemoryCacheProvider : ICacheProvider
             AbsoluteExpiration = expirationOptions?.AbsoluteExpiration,
             SlidingExpiration = expirationOptions?.SlidingExpiration
         };
-        _cache.Set(key, obj, cacheEntryOptions);
-        if (tags == default)
-        {
-            return;
-        }
 
-        var tagsEnumerated = tags.ToList();
-        foreach (var tag in tagsEnumerated)
+#if NET8_0
+        _allKeys.TryAdd(key, 0);
+#endif
+        foreach (var tag in tags)
         {
-            TagIndex.AddOrUpdate(tag,
-                _ => new HashSet<string> { key },
-                (_, set) =>
+            _tagIndex.AddOrUpdate(tag,
+                _ =>
                 {
-                    set.Add(key);
-                    return set;
+                    var keys = new ConcurrentDictionary<string, byte>();
+                    keys.TryAdd(key, 0);
+                    return keys;
+                },
+                (_, keys) =>
+                {
+                    keys.TryAdd(key, 0);
+                    return keys;
                 });
         }
 
-        cacheEntryOptions.RegisterPostEvictionCallback((_, _, _, _) =>
+        cacheEntryOptions.RegisterPostEvictionCallback((echoKey, _, reason, _) =>
         {
-            foreach (var tag in tagsEnumerated)
+            var k = (string)echoKey;
+#if NET8_0
+            if (reason != EvictionReason.Replaced)
             {
-                if (TagIndex.TryGetValue(tag, out var tagKeys))
+                _allKeys.TryRemove(k, out _);
+            }
+#endif
+
+            if (tags.Length == 0)
+            {
+                return;
+            }
+
+            foreach (var tag in tags)
+            {
+                if (!_tagIndex.TryGetValue(tag, out var tagKeys))
                 {
-                    tagKeys.Remove(key);
-                    if (!tagKeys.Any())
-                    {
-                        TagIndex.TryRemove(tag, out _);
-                    }
+                    continue;
+                }
+
+                tagKeys.TryRemove(k, out _);
+                if (tagKeys.IsEmpty)
+                {
+                    _tagIndex.TryRemove(tag, out _);
                 }
             }
         });
+
+        _cache.Set(key, obj, cacheEntryOptions);
     }
 
     public Task AddAsync<T>(string key,
         T? obj,
-        ExpirationOptions? expirationOptions = default,
-        IEnumerable<string>? tags = default)
+        ExpirationOptions? expirationOptions = null,
+        params string[] tags)
     {
         Add(key, obj, expirationOptions, tags);
         return Task.CompletedTask;
@@ -81,6 +96,9 @@ public sealed class InMemoryCacheProvider : ICacheProvider
 
     public void Delete(string key)
     {
+#if NET8_0
+        _allKeys.TryRemove(key, out _);
+#endif
         _cache.Remove(key);
     }
 
@@ -92,12 +110,12 @@ public sealed class InMemoryCacheProvider : ICacheProvider
 
     public void EvictByTag(string tag)
     {
-        if (!TagIndex.TryRemove(tag, out var cacheKeys))
+        if (!_tagIndex.TryRemove(tag, out var tagKeys))
         {
             return;
         }
 
-        foreach (var cacheKey in cacheKeys)
+        foreach (var cacheKey in tagKeys.Keys)
         {
             Delete(cacheKey);
         }
@@ -114,45 +132,48 @@ public sealed class InMemoryCacheProvider : ICacheProvider
         return _cache.TryGetValue(key, out _);
     }
 
-    public Task<IEnumerable<string>> GetAllKeysAsync(Predicate<string>? filter = default)
+    public Task<IEnumerable<string>> GetAllKeysAsync(Predicate<string>? filter = null)
     {
         return Task.FromResult(GetAllKeys(filter));
     }
 
-    public IEnumerable<string> GetAllKeys(Predicate<string>? filter = default)
+    public IEnumerable<string> GetAllKeys(Predicate<string>? filter = null)
     {
-        return _cache
-            .GetKeys<string>()
+#if NET8_0
+        return _allKeys.Keys.Where(cacheKey => filter == null || filter(cacheKey));
+#else
+        return _cache.Keys
+            .OfType<string>()
             .Where(cacheKey => filter == null || filter(cacheKey));
+#endif
     }
 
-    public Task DeleteAllAsync(Predicate<string>? filter = default)
+    public Task DeleteAllAsync(Predicate<string>? filter = null)
     {
         DeleteAll(filter);
         return Task.CompletedTask;
     }
 
-    public void DeleteAll(Predicate<string>? filter = default)
+    public void DeleteAll(Predicate<string>? filter = null)
     {
         foreach (var key in GetAllKeys(filter))
         {
             Delete(key);
         }
 
-        if (filter == default)
+        if (filter != null)
         {
-            TagIndex.Clear();
+            return;
         }
-        else
-        {
-            foreach (var entry in TagIndex)
-            {
-                entry.Value.RemoveWhere(filter);
-                if (entry.Value.Count == 0)
-                {
-                    TagIndex.TryRemove(entry);
-                }
-            }
-        }
+
+        _tagIndex.Clear();
+#if NET8_0
+        _allKeys.Clear();
+#endif
+        // The specialized cleanup for tags is harder with filter, 
+        // but Delete(key) triggers EvictionCallback which handles tag cleanup.
+        // So we just need to ensure Delete(key) is called.
+        // The explicit loop above handles it.
+        // TagIndex cleanup is automatic via callbacks.
     }
 }

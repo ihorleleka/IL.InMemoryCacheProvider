@@ -4,9 +4,9 @@ namespace IL.InMemoryCacheProvider.CacheProvider;
 
 public interface ICacheProvider
 {
-    void Add<T>(string key, T? obj, ExpirationOptions? expirationOptions = default, IEnumerable<string>? tags = default);
+    void Add<T>(string key, T? obj, ExpirationOptions? expirationOptions = null, params string[] tags);
 
-    Task AddAsync<T>(string key, T? obj, ExpirationOptions? expirationOptions = default, IEnumerable<string>? tags = default);
+    Task AddAsync<T>(string key, T? obj, ExpirationOptions? expirationOptions = null, params string[] tags);
 
     T? Get<T>(string key);
 
@@ -22,11 +22,11 @@ public interface ICacheProvider
 
     bool HasKey(string key);
 
-    Task<IEnumerable<string>> GetAllKeysAsync(Predicate<string>? filter = default);
+    Task<IEnumerable<string>> GetAllKeysAsync(Predicate<string>? filter = null);
 
-    IEnumerable<string> GetAllKeys(Predicate<string>? filter = default);
+    IEnumerable<string> GetAllKeys(Predicate<string>? filter = null);
 
-    Task DeleteAllAsync(Predicate<string>? filter = default);
+    Task DeleteAllAsync(Predicate<string>? filter = null);
 
-    void DeleteAll(Predicate<string>? filter = default);
+    void DeleteAll(Predicate<string>? filter = null);
 }
