@@ -1,4 +1,8 @@
-﻿using IL.InMemoryCacheProvider.Extensions;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using IL.InMemoryCacheProvider.Extensions;
 using Xunit;
 
 namespace IL.InMemoryCacheProvider.Tests.Extensions
@@ -54,6 +58,43 @@ namespace IL.InMemoryCacheProvider.Tests.Extensions
 
             // Assert
             Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task Concurrent_Mutations_Complete_Without_Deadlock()
+        {
+            // Arrange
+            var cacheProvider = new CacheProvider.InMemoryCacheProvider();
+            var tags = new[] { "t1", "t2", "t3" };
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            // Act
+            var tasks = Enumerable.Range(0, 24).Select(workerId => Task.Run(async () =>
+            {
+                for (var i = 0; i < 200; i++)
+                {
+                    var key = $"k-{workerId}-{i}";
+                    switch (i % 3)
+                    {
+                        case 0:
+                            await cacheProvider.GetOrAddAsync(key, () => ExpectedValue, tags: [tags[i % tags.Length]]);
+                            break;
+                        case 1:
+                            await cacheProvider.EvictByTagAsync(tags[i % tags.Length]);
+                            break;
+                        default:
+                            await cacheProvider.DeleteAllAsync();
+                            break;
+                    }
+                }
+            }, cts.Token)).ToArray();
+
+            var all = Task.WhenAll(tasks);
+            var completed = await Task.WhenAny(all, Task.Delay(TimeSpan.FromSeconds(5), cts.Token));
+
+            // Assert
+            Assert.Same(all, completed);
+            await all;
         }
     }
 }

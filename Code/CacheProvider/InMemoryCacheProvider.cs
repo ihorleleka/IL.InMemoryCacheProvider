@@ -1,11 +1,13 @@
 ﻿using System.Collections.Concurrent;
 using IL.InMemoryCacheProvider.Options;
+using IL.Misc.Concurrency;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace IL.InMemoryCacheProvider.CacheProvider;
 
 public sealed class InMemoryCacheProvider(MemoryCacheOptions? options = null) : ICacheProvider
 {
+    private const string MutationLockKey = "IL.InMemoryCacheProvider:Mutation";
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _tagIndex = new();
 #if NET8_0
     private readonly ConcurrentDictionary<string, byte> _allKeys = new();
@@ -13,6 +15,14 @@ public sealed class InMemoryCacheProvider(MemoryCacheOptions? options = null) : 
     private readonly MemoryCache _cache = new(options ?? new MemoryCacheOptions());
 
     public void Add<T>(string key, T? obj, ExpirationOptions? expirationOptions = null, params string[] tags)
+    {
+        using (LockManager.GetLock(MutationLockKey))
+        {
+            AddCore(key, obj, expirationOptions, tags);
+        }
+    }
+
+    private void AddCore<T>(string key, T? obj, ExpirationOptions? expirationOptions = null, params string[] tags)
     {
         if (obj == null)
         {
@@ -96,6 +106,14 @@ public sealed class InMemoryCacheProvider(MemoryCacheOptions? options = null) : 
 
     public void Delete(string key)
     {
+        using (LockManager.GetLock(MutationLockKey))
+        {
+            DeleteCore(key);
+        }
+    }
+
+    private void DeleteCore(string key)
+    {
 #if NET8_0
         _allKeys.TryRemove(key, out _);
 #endif
@@ -110,14 +128,17 @@ public sealed class InMemoryCacheProvider(MemoryCacheOptions? options = null) : 
 
     public void EvictByTag(string tag)
     {
-        if (!_tagIndex.TryRemove(tag, out var tagKeys))
+        using (LockManager.GetLock(MutationLockKey))
         {
-            return;
-        }
+            if (!_tagIndex.TryRemove(tag, out var tagKeys))
+            {
+                return;
+            }
 
-        foreach (var cacheKey in tagKeys.Keys)
-        {
-            Delete(cacheKey);
+            foreach (var cacheKey in tagKeys.Keys)
+            {
+                DeleteCore(cacheKey);
+            }
         }
     }
 
@@ -156,24 +177,27 @@ public sealed class InMemoryCacheProvider(MemoryCacheOptions? options = null) : 
 
     public void DeleteAll(Predicate<string>? filter = null)
     {
-        foreach (var key in GetAllKeys(filter))
+        using (LockManager.GetLock(MutationLockKey))
         {
-            Delete(key);
-        }
+            foreach (var key in GetAllKeys(filter))
+            {
+                DeleteCore(key);
+            }
 
-        if (filter != null)
-        {
-            return;
-        }
+            if (filter != null)
+            {
+                return;
+            }
 
-        _tagIndex.Clear();
+            _tagIndex.Clear();
 #if NET8_0
-        _allKeys.Clear();
+            _allKeys.Clear();
 #endif
-        // The specialized cleanup for tags is harder with filter, 
-        // but Delete(key) triggers EvictionCallback which handles tag cleanup.
-        // So we just need to ensure Delete(key) is called.
-        // The explicit loop above handles it.
-        // TagIndex cleanup is automatic via callbacks.
+            // The specialized cleanup for tags is harder with filter, 
+            // but Delete(key) triggers EvictionCallback which handles tag cleanup.
+            // So we just need to ensure Delete(key) is called.
+            // The explicit loop above handles it.
+            // TagIndex cleanup is automatic via callbacks.
+        }
     }
 }

@@ -6,6 +6,11 @@
 * Introduces several not supported by default methods, like `IEnumerable<string> GetAllKeys()` or `void DeleteAll()`.
 * Supports tags on cache entries and eviction by tag.
 
+## Concurrency Notes
+
+* Mutating operations (`Add`, `Delete`, `EvictByTag`, `DeleteAll` and async variants) are serialized to keep tag indexes consistent under concurrent use.
+* Read operations (`Get`, `HasKey`, `GetAllKeys` and async variants) are lock-free for performance. This means reads may observe transient states during concurrent mutations, which is expected for a non-transactional cache.
+
 ## Usage sample:
 
 Register in DI with any container of your preference. Microsoft.Extensions.DependencyInjection will be used in this sample.
